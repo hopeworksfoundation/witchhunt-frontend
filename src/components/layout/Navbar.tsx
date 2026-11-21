@@ -1,282 +1,149 @@
+"use client";
+
 import { ChevronDown, Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+
+import { type NavEntry, useNavConfig } from "@/lib/nav-config";
+import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+} from "../ui/dropdown-menu";
 
-// Navigation links
-const hackathonLinks = [
-	{ label: "Tracks & Themes", href: "#tracks" },
-	{ label: "Event Roadmap", href: "#roadmap" },
-	{ label: "Awards & Recognition", href: "#awards" },
-	{ label: "Winners", href: "#winners" },
-	{ label: "FAQs", href: "#faqs" },
-	{ label: "Bootcamp Recordings", href: "#recordings" },
-];
+const navLinkClasses =
+	"inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900";
 
-const communityLinks = [
-	{ label: "Team", href: "#team" },
-	{ label: "Mentors", href: "#mentors" },
-	{ label: "Volunteers", href: "#volunteers" },
-	{ label: "Contribute", href: "#contribute" },
-	{ label: "Partners & Collaborators", href: "#partners" },
-];
+function NavLinkItem({ href, label }: { href: string; label: string }) {
+	return (
+		<a href={href} className={navLinkClasses}>
+			{label}
+		</a>
+	);
+}
 
-// Dropdown component
-type NavDropdownProps = {
-	label: string;
-	links: typeof hackathonLinks;
-	mobile?: boolean;
-	onSelect?: () => void;
-};
-
-const NavDropdown = ({
-	label,
-	links,
-	mobile = false,
-	onSelect,
-}: NavDropdownProps) => {
-	const [expanded, setExpanded] = useState(false);
-
-	if (mobile) {
-		return (
-			<li>
-				<button
-					type="button"
-					className="flex min-h-11 w-full items-center justify-between rounded-md px-3 text-left text-sm font-bold text-foreground transition-colors hover:bg-secondary"
-					aria-expanded={expanded}
-					onClick={() => setExpanded((value) => !value)}
-				>
-					{label}
-					<ChevronDown
-						className={cn(
-							"size-4 transition-transform",
-							expanded && "rotate-180",
-						)}
-					/>
-				</button>
-
-				{expanded && (
-					<ul className="grid gap-0.5 pb-1 pl-3 pt-1">
-						{links.map((item) => (
-							<li key={item.label}>
-								<a
-									href={item.href}
-									onClick={onSelect}
-									className="flex min-h-10 items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
-								>
-									{item.label}
-								</a>
-							</li>
-						))}
-					</ul>
-				)}
-			</li>
-		);
-	}
-
+function NavDropdownItem({ label, links }: { label: string; links: { label: string; href: string }[] }) {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					className="h-10 gap-1.5 px-3 text-[0.8125rem] font-bold text-muted-foreground hover:bg-secondary hover:text-primary data-[state=open]:bg-secondary data-[state=open]:text-primary"
+				<button
+					type="button"
+					className={cn(
+						navLinkClasses,
+						"border border-transparent bg-transparent text-slate-700",
+					)}
 				>
 					{label}
-					<ChevronDown className="size-3.5 transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-				</Button>
+					<ChevronDown className="h-4 w-4" />
+				</button>
 			</DropdownMenuTrigger>
-
-			<DropdownMenuContent
-				align="start"
-				sideOffset={9}
-				className="w-64 rounded-lg border-border/80 p-1.5 shadow-lg"
-			>
-				{links.map((item) => (
-					<DropdownMenuItem
-						key={item.label}
-						asChild
-						className="min-h-10 cursor-pointer rounded-md px-3 text-sm font-semibold"
-					>
-						<a href={item.href}>{item.label}</a>
+			<DropdownMenuContent align="start" className="w-64 rounded-2xl p-2">
+				{links.map((link) => (
+					<DropdownMenuItem key={link.href} asChild>
+						<a
+							href={link.href}
+							className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+						>
+							{link.label}
+						</a>
 					</DropdownMenuItem>
 				))}
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);
-};
+}
 
-const RegistrationButton = () => {
-	return (
-		<Button
-			type="button"
-			className="btn-base btn-brand hidden min-h-11 px-5 sm:inline-flex"
-		>
-			Registration Open
-		</Button>
-	);
-};
+function renderNavItem(entry: NavEntry) {
+	if (entry.type === "link") {
+		return <NavLinkItem key={entry.href} href={entry.href} label={entry.label} />;
+	}
 
-// Main Navbar component
-export const Navbar = () => {
-	const [scrolled, setScrolled] = useState(false);
+	return <NavDropdownItem key={entry.label} label={entry.label} links={entry.links} />;
+}
+
+export function Navbar() {
+	const nav = useNavConfig();
 	const [mobileOpen, setMobileOpen] = useState(false);
-
-	useEffect(() => {
-		const onScroll = () => setScrolled(window.scrollY > 24);
-
-		onScroll();
-
-		window.addEventListener("scroll", onScroll, { passive: true });
-
-		return () => window.removeEventListener("scroll", onScroll);
-	}, []);
-
-	useEffect(() => {
-		document.body.style.overflow = mobileOpen ? "hidden" : "";
-
-		return () => {
-			document.body.style.overflow = "";
-		};
-	}, [mobileOpen]);
-
-	const closeMobile = () => setMobileOpen(false);
+	const items = nav ?? [];
 
 	return (
-		<header
-			className={cn(
-				"fixed inset-x-0 top-0 z-40 border-b transition-all duration-300",
-				scrolled || mobileOpen
-					? "border-border/70 bg-background/95 shadow-sm backdrop-blur-xl"
-					: "border-transparent bg-background/75 backdrop-blur-md",
-			)}
-		>
-			<nav
-				aria-label="Main navigation"
-				className="shell flex min-h-[4.5rem] items-center justify-between gap-3 px-5 md:min-h-[5rem] md:px-8"
-			>
-				{/* Brand */}
-				<a
-					href="#top"
-					onClick={closeMobile}
-					className="flex shrink-0 items-center gap-2.5 rounded-sm font-display font-extrabold text-foreground"
-					aria-label="WitchHunt, back to top"
-				>
-					<span className="grid size-9 place-items-center rounded-lg bg-primary text-sm text-primary-foreground">
-						WH
-					</span>
-					<span className="text-base sm:text-lg">WitchHunt</span>
+		<header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
+			<div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+				<a href="#top" className="flex items-center gap-3">
+					<div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 via-pink-500 to-orange-400 text-lg font-black text-white shadow-lg shadow-pink-500/20">
+						W
+					</div>
+					<div>
+						<p className="text-xs font-bold uppercase tracking-[0.22em] text-violet-600">
+							WitchHunt
+						</p>
+						<p className="text-sm font-medium text-slate-500">Hackathon</p>
+					</div>
 				</a>
 
-				{/* Desktop navigation */}
-				<ul className="hidden items-center gap-0.5 lg:flex">
-					<li>
-						<a
-							href="#about"
-							className="flex min-h-10 items-center rounded-md px-3 text-[0.8125rem] font-bold text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
-						>
-							About
-						</a>
-					</li>
+				<nav className="hidden items-center gap-2 md:flex">
+					{items.map(renderNavItem)}
+				</nav>
 
-					<li>
-						<NavDropdown label="Hackathon" links={hackathonLinks} />
-					</li>
-
-					<li>
-						<NavDropdown label="Community" links={communityLinks} />
-					</li>
-
-					<li>
-						<a
-							href="#editions"
-							className="flex min-h-10 items-center rounded-md px-3 text-[0.8125rem] font-bold text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
-						>
-							Past Editions
-						</a>
-					</li>
-				</ul>
-
-				{/* Registration button and Mobile Menu*/}
-				<div className="flex shrink-0 items-center gap-2">
-					<RegistrationButton />
-
-					<Button
-						type="button"
-						variant="outline"
-						size="icon"
-						onClick={() => setMobileOpen((value) => !value)}
-						className="size-11 border-border bg-background text-foreground lg:hidden"
-						aria-expanded={mobileOpen}
-						aria-controls="mobile-main-menu"
-						aria-label={mobileOpen ? "Close menu" : "Open menu"}
-					>
-						{mobileOpen ? (
-							<X className="size-5" />
-						) : (
-							<Menu className="size-5" />
-						)}
+				<div className="hidden items-center gap-3 md:flex">
+					<Button variant="outline" className="rounded-full border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100">
+						Join the waitlist
+					</Button>
+					<Button className="rounded-full bg-gradient-to-r from-violet-600 via-pink-500 to-orange-400 text-white shadow-lg shadow-pink-500/20 hover:opacity-95">
+						Apply now
 					</Button>
 				</div>
-			</nav>
 
-			{/* Mobile navigation */}
-			{mobileOpen && (
-				<div
-					id="mobile-main-menu"
-					className="max-h-[calc(100dvh-4.5rem)] overflow-y-auto border-t border-border bg-background px-5 pb-6 pt-3 lg:hidden"
+				<button
+					type="button"
+					aria-label={mobileOpen ? "Close menu" : "Open menu"}
+					className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-700 md:hidden"
+					onClick={() => setMobileOpen((open) => !open)}
 				>
-					<ul className="grid gap-0.5">
-						<li>
-							<a
-								href="#about"
-								onClick={closeMobile}
-								className="flex min-h-11 items-center rounded-md px-3 text-sm font-bold text-foreground transition-colors hover:bg-secondary"
-							>
-								About
-							</a>
-						</li>
+					{mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+				</button>
+			</div>
 
-						<NavDropdown
-							label="Hackathon"
-							links={hackathonLinks}
-							mobile
-							onSelect={closeMobile}
-						/>
+			{mobileOpen ? (
+				<div className="border-t border-slate-200 bg-white md:hidden">
+					<div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 sm:px-6">
+						{items.map((entry) => {
+							if (entry.type === "link") {
+								return (
+									<a
+										key={entry.href}
+										href={entry.href}
+										className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+										onClick={() => setMobileOpen(false)}
+									>
+										{entry.label}
+									</a>
+								);
+							}
 
-						<NavDropdown
-							label="Community"
-							links={communityLinks}
-							mobile
-							onSelect={closeMobile}
-						/>
-
-						<li>
-							<a
-								href="#editions"
-								onClick={closeMobile}
-								className="flex min-h-11 items-center rounded-md px-3 text-sm font-bold text-foreground transition-colors hover:bg-secondary"
-							>
-								Past Editions
-							</a>
-						</li>
-					</ul>
-
-					<div className="pt-4">
-						<Button
-							type="button"
-							className="btn-base btn-brand min-h-11 w-full"
-						>
-							Registration Open
-						</Button>
+							return (
+								<div key={entry.label} className="rounded-xl border border-slate-200 bg-slate-50 p-2">
+									<p className="mb-2 px-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+										{entry.label}
+									</p>
+									{entry.links.map((link) => (
+										<a
+											key={link.href}
+											href={link.href}
+											className="block rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-white"
+											onClick={() => setMobileOpen(false)}
+										>
+											{link.label}
+										</a>
+									))}
+								</div>
+							);
+						})}
 					</div>
 				</div>
-			)}
+			) : null}
 		</header>
 	);
-};
+}

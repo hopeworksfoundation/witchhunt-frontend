@@ -161,6 +161,7 @@ export const Navbar = () => {
 				className="shell flex min-h-[4.5rem] items-center justify-between gap-3 px-5 md:min-h-[5rem] md:px-8"
 			>
 				{/* Brand */}
+				{/* biome-ignore lint/a11y/useValidAnchor: in-page anchor; onClick only closes the mobile menu */}
 				<a
 					href="#top"
 					onClick={closeMobile}
@@ -233,6 +234,7 @@ export const Navbar = () => {
 				>
 					<ul className="grid gap-0.5">
 						<li>
+							{/* biome-ignore lint/a11y/useValidAnchor: in-page anchor; onClick only closes the mobile menu */}
 							<a
 								href="#about"
 								onClick={closeMobile}
@@ -257,6 +259,7 @@ export const Navbar = () => {
 						/>
 
 						<li>
+							{/* biome-ignore lint/a11y/useValidAnchor: in-page anchor; onClick only closes the mobile menu */}
 							<a
 								href="#editions"
 								onClick={closeMobile}
